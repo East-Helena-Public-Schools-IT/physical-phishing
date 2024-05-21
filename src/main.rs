@@ -1,9 +1,6 @@
 #![deny(clippy::unwrap_used)]
 #![deny(clippy::todo)]
 #![deny(clippy::unimplemented)]
-#![feature(ascii_char)]
-#![feature(addr_parse_ascii)]
-#![feature(async_closure)]
 
 use anyhow::anyhow;
 use chrono::Local;
