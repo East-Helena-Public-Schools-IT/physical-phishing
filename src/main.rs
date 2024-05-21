@@ -14,36 +14,18 @@ use uuid::Uuid;
 
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
-    #[cfg(debug_assertions)]
-    {
-        let filter = EnvFilter::builder()
-            .parse("room_clocks=info,poem=info,tokio=warn")
-            .expect("Could not create env filter.");
+    let filter = EnvFilter::builder()
+        .parse("phisher=info,poem=info,tokio=warn")
+        .expect("Could not create env filter.");
 
-        tracing_subscriber::fmt::fmt()
-            .with_max_level(Level::TRACE)
-            .with_target(true)
-            .with_env_filter(filter)
-            .with_thread_ids(false)
-            .with_file(false)
-            .without_time()
-            .init();
-    }
-    #[cfg(not(debug_assertions))]
-    {
-        let filter = EnvFilter::builder()
-            .parse("room_clocks=info,poem=warn,tokio=warn")
-            .expect("Could not create env filter.");
-
-        tracing_subscriber::fmt::fmt()
-            .with_max_level(Level::TRACE)
-            .with_target(true)
-            .with_env_filter(filter)
-            .with_thread_ids(false)
-            .with_file(false)
-            .without_time()
-            .init();
-    }
+    tracing_subscriber::fmt::fmt()
+        .with_max_level(Level::TRACE)
+        .with_target(true)
+        .with_env_filter(filter)
+        .with_thread_ids(false)
+        .with_file(false)
+        .without_time()
+        .init();
 
     parse().await
 }
