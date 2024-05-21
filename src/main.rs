@@ -8,13 +8,10 @@
 use anyhow::anyhow;
 use chrono::Local;
 use poem::{
-    get, handler,
-    listener::TcpListener,
-    web::{Path, RealIp},
-    Request, Route, Server,
+    get, handler, http::HeaderMap, listener::TcpListener, web::{Path, RealIp}, Request, Route, Server
 };
 use std::{env, future::IntoFuture};
-use tracing::{instrument, Level};
+use tracing::{debug, info, instrument, Level};
 use tracing_subscriber::EnvFilter;
 use uuid::Uuid;
 
@@ -57,6 +54,8 @@ async fn main() -> Result<(), anyhow::Error> {
 #[instrument(level="trace", name="web" skip_all)]
 async fn run_server() -> Result<(), std::io::Error> {
 
+    info!("Request data is put on stdout, you can safely redirect it to a file without it getting clobbered by `./foo 2> bar`");
+
     let app = Route::new()
         .at("/:id", get(gotcha))
         ;
@@ -67,16 +66,28 @@ async fn run_server() -> Result<(), std::io::Error> {
 
 #[handler]
 fn gotcha(Path(path): Path<String>, ip: RealIp, req: &Request) {
-
+    
+    fn get_header(header: &str, headers: &HeaderMap) -> String {
+        headers
+            .get(header)
+            .map_or(format!("No {header}"), |f| f
+                    .to_str()
+                    .ok()
+                    .map_or(format!("{header} has bad data"), |n| n.to_string())
+                    )
+    }
 
     let time = Local::now(); 
     let ip = ip.0.map(|f| f.to_string()).unwrap_or("Invalid IP".to_string());
     let headers = req.headers();
-    // let method = req.method().to_string();
-    // let ver = req.version();
+
+    let computer_name = get_header("X-ComputerName", headers);
+    let username = get_header("X-Username", headers);
+    let user_agent = get_header("user-agent", headers);
     let uri = req.uri();
  
-    eprintln!("{time}|{path}|{ip}|{uri}|{:?}", headers)
+    debug!("Hit from {username}");
+    eprintln!("{time}|{path}|{ip}|{uri}|{username}|{computer_name}|{user_agent}")
 }
 
 async fn parse() -> Result<(), anyhow::Error> {
