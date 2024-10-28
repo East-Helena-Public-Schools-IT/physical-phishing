@@ -2,15 +2,14 @@
 #![deny(clippy::todo)]
 #![deny(clippy::unimplemented)]
 
-use anyhow::anyhow;
 use chrono::Local;
 use poem::{
     get, handler, http::HeaderMap, listener::TcpListener, web::{Path, RealIp}, Request, Route, Server
 };
-use std::{env, future::IntoFuture};
 use tracing::{debug, info, instrument, Level};
 use tracing_subscriber::EnvFilter;
-use uuid::Uuid;
+
+mod cli;
 
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
@@ -27,7 +26,7 @@ async fn main() -> Result<(), anyhow::Error> {
         .without_time()
         .init();
 
-    parse().await
+    cli::parse().await
 }
 
 #[instrument(level="trace", name="web" skip_all)]
@@ -68,41 +67,3 @@ fn gotcha(Path(path): Path<String>, ip: RealIp, req: &Request) {
     debug!("Hit from {username}");
     eprintln!("{time}|{path}|{ip}|{uri}|{username}|{computer_name}|{user_agent}")
 }
-
-async fn parse() -> Result<(), anyhow::Error> {
-    let args = env::args().enumerate().collect::<Vec<(usize, String)>>();
-
-    for (index, word) in &args {
-        if word.starts_with("--") {
-            // read word arg
-            match word.split_at(2).1 {
-                "serve" => run_server().into_future().await?,
-                "generate" => {
-                    // args[index + 1].
-                    if let Some((_, name)) = &args.get(index + 1) {
-                        let id = Uuid::new_v4();
-                        println!("{id},{name}");
-                        return Ok(());
-                    } else {
-                        return Err(anyhow!("Must provide a name with --generate"));
-                    }
-                }
-                _ => (),
-            }
-        } else if word.starts_with("-") {
-            // read multi single args
-        } else {
-            // read word
-        }
-    }
-
-    Err(anyhow!(HELPTEXT))
-}
-
-const HELPTEXT: &str = r#"
-There is no default behavior.
-
---generate NAME     Generate a new id/location pair and write it to standard out in CSV format.
-                    (Strings with spaces must be wrapped in quotes.)
---serve             Start the server
-"#;
